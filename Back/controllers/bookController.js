@@ -102,8 +102,9 @@ exports.createRating = (req, res, next) => {
       totalRatings += req.body.rating
       finalRating = totalRatings / (book.ratings.length + 1)
       console.log("total ratings => ", totalRatings)
-      console.log("divided by length => ", book.ratings.length)
+      console.log("divided by length => ", (book.ratings.length + 1))
       console.log("gives => ", finalRating)
+      finalRating = finalRating.toPrecision(2)
 
       Book.updateOne({ _id: req.params.id }, { averageRating: finalRating, $push: { ratings: { userId: req.body.userId, grade: req.body.rating } } })
         .then(() => {
@@ -116,4 +117,25 @@ exports.createRating = (req, res, next) => {
     .catch((error) => {
       res.status(400).json({ error });
     });
+}
+
+exports.getBestRating = (req, res) => {
+  Book.find().then(
+    (books) => {
+      if (books.length <= 3)
+        res.status(200).json(books);
+      else {
+        let topThreeBooks = [...books]
+        topThreeBooks.sort((bookOne, bookTwo) => bookTwo.averageRating - bookOne.averageRating)
+        topThreeBooks = topThreeBooks.slice(0, 3)
+        res.status(200).json(topThreeBooks)
+      }
+    }
+  ).catch(
+    (error) => {
+      res.status(400).json({
+        error: error
+      });
+    }
+  );
 }
